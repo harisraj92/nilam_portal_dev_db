@@ -8,6 +8,7 @@ from datetime import timezone
 from fastapi import BackgroundTasks
 from app.schemas.enums import OTPStatusEnum
 from app.db.models import User, OTPAttempt, OTPAuditLog, OTPAuditStatus, OTPAction
+from app.services.jwt_handler import create_access_token
 from app.services.utils import get_expiry_timestamp, now_utc
 from app.services.twilio_service import trigger_sms_background
 from uuid import uuid4
@@ -125,7 +126,12 @@ async def verify_otp_and_login(db: AsyncSession, phone_number: str, otp: str) ->
         await log_otp_audit(db, normalized, OTPAction.verify, OTPAuditStatus.failed)
         raise HTTPException(status_code=401, detail="Incorrect OTP")
 
+    # ✅ OTP is valid
     record.status = OTPStatusEnum.verified
     await db.commit()
     await log_otp_audit(db, normalized, OTPAction.verify, OTPAuditStatus.success)
-    return f"mock-token-for-{normalized}"
+
+    # ✅ Return proper JWT token
+    token_data = {"sub": normalized}
+    token = create_access_token(data=token_data)
+    return token
