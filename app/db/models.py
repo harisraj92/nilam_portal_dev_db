@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, DateTime, Integer
+from sqlalchemy import Column, String, Boolean, DateTime, Integer, text
 from sqlalchemy.dialects.postgresql import UUID, ENUM as PgEnum
 from sqlalchemy.sql import func
 from enum import Enum as PyEnum
@@ -75,3 +75,19 @@ class OTPAuditLog(Base):
     ip_address = Column(String, nullable=True)
     user_agent = Column(String, nullable=True)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+
+    # ----------------------------
+# Page Permission Table
+# ----------------------------
+class PagePermission(Base):
+    __tablename__ = "user_page_permissions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    role = Column(String, nullable=False)
+    label = Column(String, nullable=False)
+    is_submenu = Column(Boolean, default=False)
+    parent_label = Column(String, nullable=True)
+    order = Column(Integer)
+    icon_class = Column(String, nullable=True)
+    href = Column(String, nullable=True)  # ✅ new column added
