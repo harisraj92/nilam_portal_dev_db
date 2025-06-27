@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
 from app.db.session import AsyncSessionLocal
-from app.services.otp import send_otp_to_user, trigger_sms_background  # ✅ CORRECTED
-from app.services.utils import normalize_contact
+from app.services.auth.otp import send_otp_to_user, trigger_sms_background
+from app.services.common.utils import normalize_contact
 
 router = APIRouter()
 

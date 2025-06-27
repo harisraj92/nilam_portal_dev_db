@@ -1,15 +1,18 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from typing import List
+
 from app.db.session import get_db
 from app.db.models import PagePermission
+from app.schemas.sidebar.sidebar_item import SidebarItem, SubmenuItem
 
 router = APIRouter(
     prefix="/sidebar",
     tags=["Sidebar"]
 )
 
-@router.get("/{role}")
+@router.get("/{role}", response_model=List[SidebarItem])
 async def get_sidebar(role: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(PagePermission)
@@ -18,7 +21,6 @@ async def get_sidebar(role: str, db: AsyncSession = Depends(get_db)):
     )
     permissions = result.scalars().all()
 
-    # Step 1: Collect all parent labels (from submenu entries)
     parent_labels = {
         item.parent_label for item in permissions
         if item.is_submenu and item.parent_label
@@ -28,22 +30,18 @@ async def get_sidebar(role: str, db: AsyncSession = Depends(get_db)):
 
     for item in permissions:
         if item.label in parent_labels:
-            # It's a parent menu — no href, has submenu
-            if item.label not in sidebar:
-                sidebar[item.label] = {
-                    "label": item.label,
-                    "iconClass": item.icon_class or "",
-                    "submenu": []
-                }
+            sidebar.setdefault(item.label, {
+                "label": item.label,
+                "iconClass": item.icon_class or "",
+                "submenu": []
+            })
 
         if item.is_submenu and item.parent_label:
-            # Child item — add to submenu of parent
-            if item.parent_label not in sidebar:
-                sidebar[item.parent_label] = {
-                    "label": item.parent_label,
-                    "iconClass": "",
-                    "submenu": []
-                }
+            sidebar.setdefault(item.parent_label, {
+                "label": item.parent_label,
+                "iconClass": "",
+                "submenu": []
+            })
 
             sidebar[item.parent_label]["submenu"].append({
                 "label": item.label,
@@ -52,7 +50,6 @@ async def get_sidebar(role: str, db: AsyncSession = Depends(get_db)):
             })
 
         elif item.label not in parent_labels:
-            # Regular item (not a parent)
             sidebar[item.label] = {
                 "label": item.label,
                 "iconClass": item.icon_class or "",
@@ -60,4 +57,5 @@ async def get_sidebar(role: str, db: AsyncSession = Depends(get_db)):
                 "submenu": []
             }
 
-    return list(sidebar.values())
+    # Final: Convert to SidebarItem Pydantic models
+    return [SidebarItem(**item) for item in sidebar.values()]

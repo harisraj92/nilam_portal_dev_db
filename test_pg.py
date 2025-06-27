@@ -1,5 +1,6 @@
 import asyncio
 import asyncpg
+from app.core.config import settings
 
 async def test():
     conn = await asyncpg.connect(
@@ -11,6 +12,7 @@ async def test():
         ssl='require'
     )
     print("✅ Connected successfully!")
+    print("✅ SECRET_KEY from .env:", settings.SECRET_KEY)
     await conn.close()
 
 asyncio.run(test())

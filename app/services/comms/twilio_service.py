@@ -6,10 +6,10 @@ from app.core.config import settings
 def send_sms(to: str, body: str):
     try:
         print(f"[Twilio] Sending to {to}: {body}")
-        client = Client(settings.twilio_account_sid, settings.twilio_auth_token)
+        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
         message = client.messages.create(
             body=body,
-            from_=settings.twilio_phone_number,
+            from_=settings.TWILIO_PHONE_NUMBER,
             to=to
         )
         print(f"[Twilio] SID: {message.sid}, Status: {message.status}")

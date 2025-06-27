@@ -3,8 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
 from app.db.session import AsyncSessionLocal
-from app.services.otp import verify_otp_and_login
-from app.services.utils import normalize_contact
+from app.services.auth.otp import verify_otp_and_login
+from app.services.common.utils import normalize_contact
+
 
 router = APIRouter()
 
@@ -32,7 +33,8 @@ async def verify_otp(
         return {
             "success": True,
             "message": "OTP verified successfully",
-            "token": token  # ⬅️ You can replace this with JWT later
+            "access_token": token,
+            "token_type": "bearer"
         }
     except HTTPException as e:
         print(f"[ERROR] HTTPException: {e.detail}")

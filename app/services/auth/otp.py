@@ -4,14 +4,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from fastapi import HTTPException
 import bcrypt, random
-from datetime import timezone
+from datetime import datetime, timedelta
 from fastapi import BackgroundTasks
 from app.schemas.enums import OTPStatusEnum
+from jose import jwt
 from app.db.models import User, OTPAttempt, OTPAuditLog, OTPAuditStatus, OTPAction
-from app.services.jwt_handler import create_access_token
-from app.services.utils import get_expiry_timestamp, now_utc
-from app.services.twilio_service import trigger_sms_background
+from app.services.auth.jwt_handler import create_access_token
+from app.services.common.utils import get_expiry_timestamp, now_utc
+from app.services.comms.twilio_service import trigger_sms_background
+from app.core.config import settings
 from uuid import uuid4
+from datetime import datetime, timezone
+
+
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # ----------------------------
 # OTP Utilities
@@ -98,6 +106,14 @@ async def send_otp_to_user(db: AsyncSession, phone_number: str, background_tasks
 # ----------------------------
 # Verify OTP
 # ----------------------------
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
 async def verify_otp_and_login(db: AsyncSession, phone_number: str, otp: str) -> str:
     normalized = normalize_phone(phone_number)
 
@@ -126,12 +142,19 @@ async def verify_otp_and_login(db: AsyncSession, phone_number: str, otp: str) ->
         await log_otp_audit(db, normalized, OTPAction.verify, OTPAuditStatus.failed)
         raise HTTPException(status_code=401, detail="Incorrect OTP")
 
-    # ✅ OTP is valid
+    # OTP is valid
     record.status = OTPStatusEnum.verified
     await db.commit()
     await log_otp_audit(db, normalized, OTPAction.verify, OTPAuditStatus.success)
 
-    # ✅ Return proper JWT token
-    token_data = {"sub": normalized}
-    token = create_access_token(data=token_data)
+    result = await db.execute(select(User).where(User.phone_number == normalized))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        user = User(phone_number=normalized)
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+    token = create_access_token(data={"sub": str(user.id)})
     return token

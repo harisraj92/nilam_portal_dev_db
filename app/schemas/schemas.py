@@ -1,20 +1,20 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
-from app.schemas.enums import OTPStatusEnum  # Make sure to import your Enum
+from app.schemas.enums import OTPStatusEnum  # ✅ Enum imported
 
 # --- Public API Schemas ---
 
 class OTPRequest(BaseModel):
     """
-    Schema to request an OTP (phone number/email).
+    Schema to request an OTP using a phone number.
     """
     phone_number: str = Field(..., example="+917010001599")
 
 
 class OTPVerify(BaseModel):
     """
-    Schema to verify an OTP.
+    Schema to verify a received OTP.
     """
     phone_number: str = Field(..., example="+917010001599")
     otp: str = Field(..., example="123456")
@@ -22,17 +22,17 @@ class OTPVerify(BaseModel):
 
 class OTPResponse(BaseModel):
     """
-    Response schema after sending/verifying OTP.
+    Standard response schema after sending or verifying an OTP.
     """
     success: bool
     message: str
 
 
-# --- Internal Schemas ---
+# --- Internal (DB Logic) Schemas ---
 
 class OTPAttemptCreate(BaseModel):
     """
-    Schema for creating/updating an OTP attempt record in DB.
+    Schema for creating an OTP attempt entry in the database.
     """
     phone_number: str
     otp_hash: str
@@ -43,7 +43,7 @@ class OTPAttemptCreate(BaseModel):
 
 class OTPVerifyAttempt(BaseModel):
     """
-    Schema to verify an OTP with audit info.
+    Schema for verifying an OTP attempt with additional audit metadata.
     """
     phone_number: str
     otp: str

@@ -1,21 +1,16 @@
-# app/db/session.py
-
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from app.core.config import settings
 from typing import AsyncGenerator
 from app.core.config import settings
 
-# Create async engine using the correct field from settings
-
-
+# Create async engine
 engine = create_async_engine(
-    settings.database_url,  # ✅ Use lowercase 'database_url' as defined in config.py
-    echo=True,
-    connect_args={"ssl": "require"}  # ✅ Required for Azure PostgreSQL
+    settings.DATABASE_URL,
+    echo=False, 
+    connect_args={"ssl": "require"}
 )
 
-# Create async session factory
+# Create async session maker
 AsyncSessionLocal = sessionmaker(
     bind=engine,
     class_=AsyncSession,
@@ -24,7 +19,7 @@ AsyncSessionLocal = sessionmaker(
     expire_on_commit=False,
 )
 
-# ✅ Provide dependency to inject DB session
+# Async DB session dependency
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-     async with AsyncSessionLocal() as session:
+    async with AsyncSessionLocal() as session:
         yield session
