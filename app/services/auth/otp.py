@@ -157,4 +157,4 @@ async def verify_otp_and_login(db: AsyncSession, phone_number: str, otp: str) ->
         await db.refresh(user)
 
     token = create_access_token(data={"sub": str(user.id)})
-    return token
+    return token,user

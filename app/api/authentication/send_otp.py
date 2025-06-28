@@ -1,22 +1,34 @@
-# app/api/authentication/send_otp.py
-
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
 from app.db.session import AsyncSessionLocal
-from app.services.auth.otp import send_otp_to_user, trigger_sms_background
+from app.services.auth.otp import send_otp_to_user
 from app.services.common.utils import normalize_contact
 
 router = APIRouter()
+print("[DEBUG] send_otp.py: router initialized")
 
+
+# Define request body model
 class OTPRequest(BaseModel):
     contact: str
 
+
+# Dependency to get DB session
 async def get_db() -> AsyncSession:
     async with AsyncSessionLocal() as session:
         yield session
 
+
+# ✅ OPTIONS handler for CORS preflight
+@router.options("/send-otp")
+async def preflight_handler():
+    print("[DEBUG] Preflight CORS handled")
+    return Response(status_code=200)
+
+
+# ✅ Main handler to send OTP
 @router.post("/send-otp")
 async def request_otp(
     payload: OTPRequest,
@@ -27,7 +39,7 @@ async def request_otp(
         normalized = normalize_contact(payload.contact)
         print(f"[SEND OTP] Contact: {normalized}")
 
-        otp = await send_otp_to_user(db, normalized, background_tasks)  # ✅ Pass background
+        otp = await send_otp_to_user(db, normalized, background_tasks)
         print(f"[OTP GENERATED] {otp}")
         print("[TASK] Triggered SMS background")
 
@@ -40,4 +52,3 @@ async def request_otp(
     except Exception as e:
         print(f"[ERROR] Unexpected: {e}")
         raise HTTPException(status_code=500, detail="Internal error")
-

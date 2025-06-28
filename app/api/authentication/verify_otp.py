@@ -9,6 +9,7 @@ from app.services.common.utils import normalize_contact
 
 router = APIRouter()
 
+
 # ✅ Request schema for JSON body
 class OTPVerifyRequest(BaseModel):
     contact: str
@@ -29,12 +30,16 @@ async def verify_otp(
     print(f"[VERIFY OTP] Attempt for: {normalized}")
 
     try:
-        token = await verify_otp_and_login(db, normalized, payload.otp)
+        token,user = await verify_otp_and_login(db, normalized, payload.otp)
         return {
             "success": True,
             "message": "OTP verified successfully",
-            "access_token": token,
-            "token_type": "bearer"
+            "access_token": token,            
+            "token_type": "bearer",
+             "user": {
+        "id": user.id,      
+        "role": user.role,        
+    }
         }
     except HTTPException as e:
         print(f"[ERROR] HTTPException: {e.detail}")

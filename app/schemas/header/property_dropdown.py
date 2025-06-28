@@ -2,8 +2,7 @@ from pydantic import BaseModel
 
 class PropertyDropdownOut(BaseModel):
     id: str
-    name: str
-    location: str | None = None
+    label: str   # ✅ இது முக்கியம்
 
     class Config:
-        from_attributes = True  # ✅ for Pydantic v2
+        from_attributes = True

@@ -8,7 +8,7 @@ from app.db.session import engine
 from app.core.config import settings
 
 app = FastAPI(
-    title="Nilam OTP Auth API",
+    title="Nilam Insights Portal API",
     version="1.0.0",
     description="Secure login with OTP and Twilio integration"
 )
@@ -19,7 +19,7 @@ print(f"[Startup Check] Loaded SECRET_KEY = {settings.SECRET_KEY}")
 # CORS Middleware Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[settings.FRONTEND_ORIGIN],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
