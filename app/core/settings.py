@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    FRONTEND_ORIGIN: str
 
     # Database
     DATABASE_URL: str
