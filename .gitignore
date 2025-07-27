@@ -1,0 +1,12 @@
+# VSCode
+.vscode/
+
+# Deployment files
+deploy_user_service/
+startup.sh
+
+# Others
+.env
+venv/
+__pycache__/
+*.pyc
