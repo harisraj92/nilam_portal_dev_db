@@ -4,21 +4,32 @@ from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from typing import Optional
 import os
+from dotenv import load_dotenv
 
 # You can import SECRET_KEY and ALGORITHM from your config or .env
+load_dotenv(dotenv_path=".env") 
 SECRET_KEY = os.getenv("SECRET_KEY", "change_this_secret_in_prod")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60  # 1 hour by default
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """
-    Creates a JWT token for the given data dictionary.
+    Creates a JWT token for the given user data dictionary.
+    Required keys in data: id, fullname, role, phone_number
     """
-    to_encode = data.copy()
+    to_encode = {
+        "sub": data["id"],  # UUID string expected
+        "fullname": data["fullname"],        
+        "role": data["role"],
+        "phone_number": data.get("phone_number")  # optional
+    }
+
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
+
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
 
 def decode_access_token(token: str):
     """

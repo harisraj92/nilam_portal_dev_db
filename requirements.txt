@@ -22,3 +22,5 @@ pytest==8.4.1                 # Test framework
 pytest-asyncio==1.1.0        # Support for async test cases
 
 pytz==2025.2          # Timezone support
+
+PyJWT>=2.0.0
